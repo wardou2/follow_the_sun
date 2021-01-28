@@ -1,0 +1,18 @@
+{
+  "name": "follow_the_sun",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "dotenv": "^8.2.0",
+    "node-hue-api": "^4.0.10",
+    "sunrise-sunset": "^1.0.0"
+  }
+}
