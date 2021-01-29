@@ -1,9 +1,9 @@
 require('dotenv').config();
 const v3 = require('node-hue-api').v3
     , hueApi = v3.api
-
-const LightState = v3.lightStates.LightState;
-
+    , Rule = v3.rules.Rule
+    , LightState = v3.lightStates.LightState;
+const SunCalc = require('suncalc')
 
 const main = async () => {    
 
@@ -20,11 +20,19 @@ const main = async () => {
         return api
     }
 
+    const getSunset = () => {
+        // Hardcoded for Seattle, for now
+        const times = SunCalc.getTimes(new Date(), 47, -122);
+        const sunset = times.sunset // .getHours() + ':' + times.sunrise.getMinutes();
+        return sunset
+    }
+
     const IP_ADDRESS = await getBridgeIp()
     const USERNAME = process.env.USERNAME
     const api = await getApi()
+    const sunset = getSunset()
 
-    const getAllLights = async () => {
+    const getLights = async () => {
         const results = await api.lights.getAll()
         const lights = results.map(light => {
             return light["_data"]
@@ -41,8 +49,18 @@ const main = async () => {
         return api.lights.setLightState(lightId, lightState)
     }
 
-    const lights = await getAllLights()
-    console.log(lights)
+    const checkIfSunset = () => setInterval(() => {
+        let now = new Date()
+        if (sunset > now) console.log(true)
+    }, 1000)
+
+
+    const checkSunsetId = checkIfSunset()
+
+    setTimeout(() => {
+        clearInterval(checkSunsetId)
+    }, 10000)
+    
 }
 
 main()
