@@ -5,7 +5,11 @@ const v3 = require('node-hue-api').v3
     , LightState = v3.lightStates.LightState;
 const SunCalc = require('suncalc')
 
-const main = async () => {    
+const main = async () => { 
+    let IP_ADDRESS 
+    let USERNAME 
+    let api 
+    let sunset 
 
     const getBridgeIp = async () => {
         const results = await v3.discovery.nupnpSearch()
@@ -27,10 +31,26 @@ const main = async () => {
         return sunset
     }
 
-    const IP_ADDRESS = await getBridgeIp()
-    const USERNAME = process.env.USERNAME
-    const api = await getApi()
-    const sunset = getSunset()
+    const initTimer = () => {
+        // https://stackoverflow.com/questions/4455282/call-a-javascript-function-at-a-specific-time-of-day
+        let now = new Date();
+        let millisTillMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0) - now;
+        if (millisTillMidnight < 0) {
+            millisTillMidnight += 86400000; // it's after 11:59pm, try 11:59pm tomorrow.
+        }
+        console.log(millisTillMidnight)
+        return setInterval(function(){
+            sunset = getSunset();
+            console.log('h')
+        }, millisTillMidnight);
+    }
+
+    const initialize = async () => {
+        IP_ADDRESS = await getBridgeIp()
+        USERNAME = process.env.USERNAME
+        api = await getApi()
+        sunset = getSunset()
+    }
 
     const getLights = async () => {
         const results = await api.lights.getAll()
@@ -54,13 +74,8 @@ const main = async () => {
         if (sunset > now) console.log(true)
     }, 1000)
 
-
-    const checkSunsetId = checkIfSunset()
-
-    setTimeout(() => {
-        clearInterval(checkSunsetId)
-    }, 10000)
-    
+    await initialize()
+    const checkSunTimes = initTimer()
 }
 
 main()
