@@ -37,11 +37,16 @@ class Hue {
         return lights
     } 
 
-    async changeLight (lightId) {
-        const lightState = new LightState()
-            .on()
-            .ct(200)
-            .brightness(100)
+    async setLightState (lightId, {hue, sat, ct, transitiontime}) {
+        const lightState = ct ? new LightState()
+                .on()
+                .ct(ct)
+                .transitiontime(transitiontime) 
+            : new LightState()
+                .on()
+                .hue(hue)
+                .sat(sat)
+                .transitiontime(transitiontime)
 
         return this.api.lights.setLightState(lightId, lightState)
     }

@@ -12,7 +12,13 @@ const main = async () => {
         const times = SunCalc.getTimes(new Date(), 47, -122);
         const sunrise = times.sunrise
         const sunset = times.sunset // .getHours() + ':' + times.sunrise.getMinutes();
-        return [sunrise, sunset]
+
+        const sunriseStart = new Date(sunrise)
+        sunriseStart.setMinutes(sunrise.getMinutes() - 30)
+        const sunsetStart = new Date(sunset)
+        sunsetStart.setMinutes(sunset.getMinutes() - 30)
+
+        return [sunriseStart, sunsetStart]
     }
 
     const initialize = async () => {
@@ -21,20 +27,37 @@ const main = async () => {
 
         // Set schedule to check for sunset times every day at midnight
         schedule.scheduleJob('0 0 * * *', () => {
-            sunset = getSunTimes()
+            [sunrise, sunset] = getSunTimes()
+            console.log('ran schedule now', new Date())
         })
         return [sunrise, sunset]
     }
-
-    const checkIfSunset = () =>  {
-        let now = new Date()
-        if (sunset > now) console.log(true)
+    
+    const sunsetRoutine = async () => {
+        // Get all lights that are on
+        const lights = (await hueAPI.getLights()).filter(light => 
+            light.state.on
+        )
+        lights.forEach(light => {
+            if (light.state.ct) {
+                hueAPI.setLightState(light.id, {ct: 500, transitiontime: 36000})
+            } else {
+                hueAPI.setLightState(light.id, {hue: 11342, sat: 183, transitiontime: 36000})
+            }
+            
+        })
     }
 
-    let [sunrise, sunset] = await initialize()
-    hueAPI.changeLight(3)
-    
+    let [sunriseStart, sunsetStart] = await initialize()
 
+    // For testing purposes
+    const now = new Date()
+    now.setMilliseconds(now.getMilliseconds() + 2000 )
+
+    const job = schedule.scheduleJob(sunsetSTart, () => {
+        console.log('ran sunset routine now')
+        sunsetRoutine()
+    })
 }
 
 main()
